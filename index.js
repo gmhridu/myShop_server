@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const ConnectDB = require("./db/db");
+const productRouter = require("./routes/product.route");
 
 dotenv.config();
 
@@ -52,6 +53,8 @@ app.get("/", (req, res) => {
     message: "Server is running",
   });
 });
+
+app.use('/products', productRouter);
 
 /// error handling
 app.use((error, req, res, next) => {
