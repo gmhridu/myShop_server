@@ -18,7 +18,8 @@ const productSchema = new mongoose.Schema({
         required: true
     },
     category: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category',
         required: true
     },
     ratings: {
@@ -28,15 +29,16 @@ const productSchema = new mongoose.Schema({
         max: 5
     },
     brandName: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Brand',
         required: true
     },
     color: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Color',
         required: true
     },
-}, {timestamps: true});
-
+}, { timestamps: true });
 
 const Product = mongoose.model('Product', productSchema);
 

@@ -5,6 +5,9 @@ const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const ConnectDB = require("./db/db");
 const productRouter = require("./routes/product.route");
+const categoryRouter = require("./routes/category.route");
+const brandRouter = require("./routes/brand.route");
+const colorRouter = require("./routes/color.route");
 
 dotenv.config();
 
@@ -33,7 +36,7 @@ const cookieOptions = {
 }
 
 // jwt
-app.post('jwt', async(req, res)=> {
+app.post('/jwt', async(req, res)=> {
     const user = req.body;
     console.log("user for token", user);
     const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
@@ -56,6 +59,14 @@ app.get("/", (req, res) => {
 
 app.use('/products', productRouter);
 
+app.use('/categories', categoryRouter);
+
+app.use('/brands', brandRouter);
+
+app.use('/colors', colorRouter);
+
+
+
 /// error handling
 app.use((error, req, res, next) => {
   res.status(500).json({
@@ -74,7 +85,7 @@ app.listen(port, () => {
   console.log(`Server is running on port: http://localhost:${port}`);
 });
 
-process.on("unhandledRejection", (error, promise) => {
-  console.error("Unhandled rejection at: ", promise, "reason: ", error);
+process.on("unhandledRejection", (err) => {
+  console.error("Unhandled rejection at:", err);
   server.close(() => process.exit(1));
 });
