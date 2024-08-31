@@ -8,25 +8,26 @@ const createProduct = async (req, res) => {
   try {
     const { category, brandName, color, ...body } = req.body;
 
-    // Find or create the category
-    let categoryDoc = await Category.findOne({ name: category });
-    if (!categoryDoc) {
-      categoryDoc = await Category.create({ name: category });
-    }
+    // Find or create the category, brand, and color
+    let categoryDoc = await Category.findOneAndUpdate(
+      { name: category },
+      { $setOnInsert: { name: category } },
+      { new: true, upsert: true }
+    );
 
-    // Find or create the brand
-    let brandDoc = await Brand.findOne({ name: brandName });
-    if (!brandDoc) {
-      brandDoc = await Brand.create({ name: brandName });
-    }
+    let brandDoc = await Brand.findOneAndUpdate(
+      { name: brandName },
+      { $setOnInsert: { name: brandName } },
+      { new: true, upsert: true }
+    );
 
-    // Find or create the color
-    let colorDoc = await Color.findOne({ name: color });
-    if (!colorDoc) {
-      colorDoc = await Color.create({ name: color });
-    }
+    let colorDoc = await Color.findOneAndUpdate(
+      { name: color },
+      { $setOnInsert: { name: color } },
+      { new: true, upsert: true }
+    );
 
-    // Create the product with references to the created/found category, brand, and color
+    // Create the product with references to category, brand, and color
     const newProduct = await Product.create({
       ...body,
       category: categoryDoc._id,

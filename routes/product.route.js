@@ -4,10 +4,11 @@ const {
   getProductById,
   getProducts,
 } = require("../controllers/product.controller");
+const upload = require("../middlewares/upload");
 
 const productRouter = express.Router();
 
-productRouter.post("/", createProduct);
+productRouter.post("/", upload.single("productImage"), createProduct);
 
 productRouter.get("/", getProducts);
 

@@ -15,7 +15,19 @@ const port = process.env.PORT || 9000;
 const mongoUri = process.env.MONGODB_URI;
 
 const corsOptions = {
-  origin: ["http://localhost:5173"],
+  origin: [
+    "http://localhost:5173",
+    "https://search-filtering.web.app",
+    "https://search-filtering.firebaseapp.com",
+  ],
+  methods: ["GET", "POST", "DELETE", "PUT"],
+  allowedHeaders: [
+    "Content-type",
+    "Authorization",
+    "Cache-Control",
+    "Expires",
+    "Pragma",
+  ],
   credentials: true,
   optionSuccessStatus: 200,
 };
@@ -23,32 +35,31 @@ const corsOptions = {
 const app = express();
 
 app.use(cors(corsOptions));
-app.use(express.json());
 app.use(cookieParser());
+app.use(express.json());
 
 // connect mongodb
 ConnectDB(mongoUri);
 
 const cookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-}
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+};
 
 // jwt
-app.post('/jwt', async(req, res)=> {
-    const user = req.body;
-    console.log("user for token", user);
-    const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: "30d",
-    });
-    res.cookie("token", token, cookieOptions).send({success: true});
+app.post("/jwt", async (req, res) => {
+  const user = req.body;
+  console.log("user for token", user);
+  const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: "30d",
+  });
+  res.cookie("token", token, cookieOptions).send({ success: true });
 });
 
-app.post('/logout', (req, res)=> {
-    res.clearCookie("token", cookieOptions).send({success: true});
-})
-
+app.post("/logout", (req, res) => {
+  res.clearCookie("token", cookieOptions).send({ success: true });
+});
 
 // routes
 app.get("/", (req, res) => {
@@ -57,15 +68,13 @@ app.get("/", (req, res) => {
   });
 });
 
-app.use('/products', productRouter);
+app.use("/products", productRouter);
 
-app.use('/categories', categoryRouter);
+app.use("/categories", categoryRouter);
 
-app.use('/brands', brandRouter);
+app.use("/brands", brandRouter);
 
-app.use('/colors', colorRouter);
-
-
+app.use("/colors", colorRouter);
 
 /// error handling
 app.use((error, req, res, next) => {
