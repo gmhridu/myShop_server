@@ -1,180 +1,149 @@
 const mongoose = require("mongoose");
 const Product = require("../models/product.model");
-const Category = require("../models/category.model");
-const Brand = require("../models/brand.model");
-const Color = require("../models/color.model");
+const { imageUploadUtil } = require("./cloudinary");
 
-const createProduct = async (req, res) => {
+
+const handleImageUpload = async (req, res) => {
   try {
-    const { category, brandName, color, ...body } = req.body;
-
-    // Find or create the category, brand, and color
-    let categoryDoc = await Category.findOneAndUpdate(
-      { name: category },
-      { $setOnInsert: { name: category } },
-      { new: true, upsert: true }
-    );
-
-    let brandDoc = await Brand.findOneAndUpdate(
-      { name: brandName },
-      { $setOnInsert: { name: brandName } },
-      { new: true, upsert: true }
-    );
-
-    let colorDoc = await Color.findOneAndUpdate(
-      { name: color },
-      { $setOnInsert: { name: color } },
-      { new: true, upsert: true }
-    );
-
-    // Create the product with references to category, brand, and color
-    const newProduct = await Product.create({
-      ...body,
-      category: categoryDoc._id,
-      brandName: brandDoc._id,
-      color: colorDoc._id,
-    });
-
-    res.status(201).json(newProduct);
-  } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: error.message,
-    });
-  }
-};
-
-const getAllProduct = async (req, res) => {
-  try {
-    const products = await Product.find();
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: err.message,
-    });
-  }
-};
-
-const getProductById = async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-    if (!product) return res.status(404).json({ message: "Product not found" });
-    res.json(product);
-  } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: err.message,
-    });
-  }
-};
-
-// http://localhost:5000/products?page=1&size=6&filter={"category":["Electronics"],"brandName":["TechBrand"],"color":["Black"],"price":[400,1500]}&sort=price&search=
-
-const getProducts = async (req, res) => {
-  try {
-    const {
-      page = 1,
-      size = 6,
-      filter = "{}",
-      sort = "",
-      search = "",
-    } = req.query;
-
-    let filters = {};
-    try {
-      filters = JSON.parse(filter);
-    } catch (parseError) {
-      return res
-        .status(400)
-        .json({ message: "Invalid filter JSON", error: parseError.message });
-    }
-
-    const categoryIds =
-      filters.category && filters.category.length
-        ? await Category.find({ name: { $in: filters.category } }).select("_id")
-        : [];
-    const brandIds =
-      filters.brand && filters.brand.length
-        ? await Brand.find({ name: { $in: filters.brand } }).select("_id")
-        : [];
-    const colorIds =
-      filters.color && filters.color.length
-        ? await Color.find({ name: { $in: filters.color } }).select("_id")
-        : [];
-
-    const categoryFilter = categoryIds.length
-      ? { category: { $in: categoryIds.map((cat) => cat._id) } }
-      : {};
-    const brandFilter = brandIds.length
-      ? { brandName: { $in: brandIds.map((brand) => brand._id) } }
-      : {};
-    const colorFilter = colorIds.length
-      ? { color: { $in: colorIds.map((color) => color._id) } }
-      : {};
-    const priceFilter =
-      filters.price && filters.price.length === 2
-        ? {
-            price: {
-              $gte: parseInt(filters.price[0]),
-              $lte: parseInt(filters.price[1]),
-            },
-          }
-        : {};
-
-    const searchFilter = search
-      ? { productName: { $regex: search, $options: "i" } }
-      : {};
-
-    const finalFilter = {
-      ...categoryFilter,
-      ...brandFilter,
-      ...colorFilter,
-      ...priceFilter,
-      ...searchFilter,
-    };
-
-    const sortOptions = sort
-      ? sort.split(",").reduce((acc, sortField) => {
-          const [key, order] = sortField.startsWith("-")
-            ? [sortField.slice(1), -1]
-            : [sortField, 1];
-          acc[key] = order;
-          return acc;
-        }, {})
-      : {};
-
-    const limit = parseInt(size);
-    const skip = (parseInt(page) - 1) * limit;
-
-    const products = await Product.find(finalFilter)
-      .populate("category")
-      .populate("brandName")
-      .populate("color")
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(limit);
-
-    const totalProducts = await Product.countDocuments(finalFilter);
+    const b64 = Buffer.from(req.file.buffer).toString("base64");
+    const url = "data:" + req.file.mimetype + ";base64," + b64;
+    const result = await imageUploadUtil(url);
 
     res.json({
-      products,
-      totalPages: Math.ceil(totalProducts / limit),
-      currentPage: parseInt(page),
-      totalProducts,
+      success: true,
+      result,
     });
   } catch (error) {
-    console.error("Error fetching products:", error);
-    res.status(500).json({ message: "Error fetching products", error });
+    console.log(error);
+    res.json({
+      success: false,
+      message: "Error occured",
+    });
   }
 };
 
-module.exports = {
-  createProduct,
-  getAllProduct,
-  getProductById,
-  getProducts,
+// add new product
+const addProduct = async (req, res) => {
+   try {
+     const {
+       title,
+       description,
+       price,
+       salePrice,
+       totalStock,
+       category,
+       brand,
+       imageUrl,
+     } = req.body;
+     const newProduct = new Product({
+       title,
+       description,
+       price,
+       salePrice,
+       totalStock,
+       category,
+       brand,
+       imageUrl,
+     });
 
-  // getPagination,
-  // getDataCount,
+     const savedProduct = await newProduct.save();
+     res.status(201).json(savedProduct);
+   } catch (error) {
+     res.status(500).json({ message: "Failed to create product", error });
+   }
+};
+
+
+// fetch all Product
+const fetchAllProducts = async (req, res) => {
+  try {
+    const products = await Product.find({});
+    res.json({
+      success: true,
+      message: "Products fetched successfully",
+      data: products,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error Occurred",
+    });
+  }
+};
+// edit a product
+const editProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      imageUrl,
+      title,
+      description,
+      category,
+      brand,
+      price,
+      salePrice,
+      totalStock,
+    } = req.body;
+
+    const findProduct = await Product.findById(id);
+    if (!findProduct) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    };
+
+    findProduct.title = title || findProduct.title;
+    findProduct.image = imageUrl || findProduct.imageUrl;
+    findProduct.description = description || findProduct.description;
+    findProduct.category = category || findProduct.category;
+    findProduct.brand = brand || findProduct.brand;
+    findProduct.price = price || findProduct.price;
+    findProduct.salePrice = salePrice || findProduct.salePrice;
+    findProduct.totalStock = totalStock || findProduct.totalStock;
+
+    await findProduct.save();
+    res.json({
+      success: true,
+      message: "Product updated successfully",
+      data: findProduct,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error Occurred",
+    });
+  }
+};
+
+// delete a product
+const deleteProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedProduct = await Product.findByIdAndDelete(id);
+    if (!deletedProduct) { 
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    };
+    res.json({
+      success: true,
+      message: "Product deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error Occurred",
+    });
+  }
+};
+
+
+module.exports = {
+  addProduct,
+  fetchAllProducts,
+  editProduct,
+  deleteProduct,
+  handleImageUpload,
 };

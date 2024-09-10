@@ -1,0 +1,34 @@
+const express = require('express');
+const {
+  registerUser,
+  loginUser,
+  googleSingIn,
+  logoutUser,
+} = require("../controllers/user.controller");
+const authMiddleware = require('../middlewares/authMiddleware');
+
+const router = express.Router();
+
+// register router
+router.post('/register', registerUser);
+
+// login router
+router.post('/login', loginUser);
+
+// google signIn router
+router.post('/google', googleSingIn);
+
+// logout router
+router.get("/logout", logoutUser);
+
+// middleware
+router.get('/check-auth', authMiddleware, (req, res) => {
+  const user = req.user;
+  res.status(200).json({
+    success: true,
+    message: "User authenticated successfully",
+    user
+  })
+})
+
+module.exports = router;

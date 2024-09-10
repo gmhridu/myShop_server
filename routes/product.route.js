@@ -1,21 +1,26 @@
 const express = require("express");
 const {
-  createProduct,
-  getProductById,
-  getProducts,
+  handleImageUpload,
+  fetchAllProducts,
+  editProduct,
+  deleteProduct,
+  addProduct,
 } = require("../controllers/product.controller");
-const upload = require("../middlewares/upload");
+const { upload } = require("../controllers/cloudinary");
 
 const productRouter = express.Router();
 
-productRouter.post("/", upload.single("productImage"), createProduct);
+productRouter.post("/add", addProduct);
 
-productRouter.get("/", getProducts);
+productRouter.get("/get", fetchAllProducts);
 
-// productRouter.get('/pagination', getAllProduct);
+productRouter.put("/edit/:id", editProduct);
 
-// productRouter.get('/data-count', getDataCount);
-
-productRouter.get("/:id", getProductById);
+productRouter.delete("/delete/:id", deleteProduct);
+productRouter.post(
+  "/upload-image",
+  upload.single("my_file"),
+  handleImageUpload
+);
 
 module.exports = productRouter;

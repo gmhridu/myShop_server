@@ -8,6 +8,7 @@ const productRouter = require("./routes/product.route");
 const categoryRouter = require("./routes/category.route");
 const brandRouter = require("./routes/brand.route");
 const colorRouter = require("./routes/color.route");
+const userRouter = require("./routes/user.route");
 
 dotenv.config();
 
@@ -67,6 +68,8 @@ app.get("/", (req, res) => {
     message: "Server is running",
   });
 });
+
+app.use("/auth", userRouter);
 
 app.use("/products", productRouter);
 
