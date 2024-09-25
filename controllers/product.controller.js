@@ -54,7 +54,7 @@ const addProduct = async (req, res) => {
 };
 
 
-// fetch all Product
+// fetch all admin Product
 const fetchAllProducts = async (req, res) => {
   try {
     const products = await Product.find({});
@@ -69,7 +69,74 @@ const fetchAllProducts = async (req, res) => {
       message: "Error Occurred",
     });
   }
+}; 
+
+// fetch shop products
+const getFilteredProducts = async (req, res) => {
+  try {
+    const { Category, Brand, price, sortBy } = req.query;
+
+    const filters = {};
+
+    if (Category) filters.category = { $in: Category.split(",") };
+
+   
+    if (Brand) filters.brand = { $in: Brand.split(",") };
+
+    
+    if (price) {
+      const [min, max] = price.split("-");
+      filters.price = { $gte: Number(min), $lte: Number(max) };
+    }
+
+    
+    const sortOption = {};
+    if (sortBy === "price-lowtohigh") sortOption.price = 1;
+    else if (sortBy === "price-hightolow") sortOption.price = -1;
+
+    const products = await Product.find(filters).sort(sortOption);
+
+    res.json({ success: true, data: products });
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Error occurred while fetching products",
+      });
+  }
 };
+
+
+// get product by id
+const getProductDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    };
+
+    res.json({
+      success: true,
+      message: 'Fetched Product details perfectly',
+      data: product
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Error occurred while getting product details",
+    })
+  }
+}
+
 // edit a product
 const editProduct = async (req, res) => {
   try {
@@ -140,9 +207,13 @@ const deleteProduct = async (req, res) => {
 };
 
 
+
+
 module.exports = {
   addProduct,
   fetchAllProducts,
+  getFilteredProducts,
+  getProductDetails,
   editProduct,
   deleteProduct,
   handleImageUpload,

@@ -9,6 +9,11 @@ const categoryRouter = require("./routes/category.route");
 const brandRouter = require("./routes/brand.route");
 const colorRouter = require("./routes/color.route");
 const userRouter = require("./routes/user.route");
+const cartRouter = require("./routes/cart.route")
+const addressRouter = require("./routes/address.route")
+const stripeRouter = require("./routes/stripe.route");
+const searchRouter = require("./routes/searchr.route");
+const ratingRouter = require("./routes/rating.route");
 
 dotenv.config();
 
@@ -78,6 +83,16 @@ app.use("/categories", categoryRouter);
 app.use("/brands", brandRouter);
 
 app.use("/colors", colorRouter);
+
+app.use("/carts", cartRouter);
+
+app.use("/address", addressRouter);
+
+app.use("/stripe", stripeRouter);
+
+app.use("/search", searchRouter);
+
+app.use("/reviews", ratingRouter);
 
 /// error handling
 app.use((error, req, res, next) => {

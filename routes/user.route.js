@@ -19,7 +19,8 @@ router.post('/login', loginUser);
 router.post('/google', googleSingIn);
 
 // logout router
-router.get("/logout", logoutUser);
+
+router.post("/logout", logoutUser);
 
 // middleware
 router.get('/check-auth', authMiddleware, (req, res) => {

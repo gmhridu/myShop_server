@@ -5,6 +5,8 @@ const {
   editProduct,
   deleteProduct,
   addProduct,
+  getFilteredProducts,
+  getProductDetails,
 } = require("../controllers/product.controller");
 const { upload } = require("../controllers/cloudinary");
 
@@ -13,6 +15,10 @@ const productRouter = express.Router();
 productRouter.post("/add", addProduct);
 
 productRouter.get("/get", fetchAllProducts);
+
+productRouter.get("/shop/get", getFilteredProducts);
+
+productRouter.get("/shop/details/:id", getProductDetails);
 
 productRouter.put("/edit/:id", editProduct);
 
