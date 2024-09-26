@@ -62,7 +62,7 @@ const createOrder = async (req, res) => {
       metadata: {
         userId,
         orderId: newOrder._id.toString(),
-        paymentDetailsId: paymentDetailsId, 
+        paymentDetailsId: paymentDetailsId,
       },
     });
     newOrder.sessionId = session.id;
@@ -79,25 +79,25 @@ const capturePayment = async (req, res) => {
   try {
     const { paymentId, orderId } = req.body;
 
-    // Find the order
+   
     let order = await Order.findById(orderId);
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    // Ensure the order status is 'pending' before updating
+    
     if (order.orderStatus !== "pending") {
       return res
         .status(400)
         .json({ error: "Order already processed or cancelled" });
     }
 
-    // Update order status to confirmed and capture payment details
+   
     order.orderStatus = "confirmed";
     order.paymentDetails.status = "paid";
     order.paymentDetails.id = paymentId;
 
-    // Update stock for each item in the order
+    
     for (let item of order.cartItems) {
       let product = await Product.findById(item.productId);
 
@@ -108,7 +108,7 @@ const capturePayment = async (req, res) => {
         });
       }
 
-      // Check for stock availability
+      
       if (product.totalStock < item.quantity) {
         return res.status(400).json({
           success: false,
@@ -116,15 +116,15 @@ const capturePayment = async (req, res) => {
         });
       }
 
-      // Deduct the quantity from product stock
+      
       product.totalStock -= item.quantity;
       await product.save();
     }
 
-    // Delete the cart after successful order
+    
     await Cart.findByIdAndDelete(order.cartId);
 
-    // Save the updated order
+    
     await order.save();
 
     res.status(200).json({
@@ -149,11 +149,10 @@ app.post("/webhook", async (req, res) => {
     return res.sendStatus(400);
   }
 
-  // Handle the event
+  
   switch (event.type) {
     case "checkout.session.completed":
       const session = event.data.object;
-      // Call capturePayment function here
       await capturePayment(
         {
           body: {
@@ -164,7 +163,6 @@ app.post("/webhook", async (req, res) => {
         res
       );
       break;
-    // Add more event types as needed
     default:
       console.log(`Unhandled event type ${event.type}`);
   }
