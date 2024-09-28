@@ -189,7 +189,7 @@ const refreshAuthToken = async (req, res) => {
     const newAccessToken = jwt.sign(
       { id: decoded.id, role: decoded.role, email: decoded.email },
       process.env.SECRET_KEY,
-      { expiresIn: "60m" } // New access token lasts 1 hour
+      { expiresIn: "60m" } 
     );
 
     res.cookie("token", newAccessToken, { httpOnly: true, secure: false });
