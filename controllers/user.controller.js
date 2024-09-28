@@ -15,13 +15,13 @@ const generateTokens = (user) => {
       userName: user.userName,
     },
     process.env.SECRET_KEY,
-    { expiresIn: "60m" } // Access token lasts 1 hour
+    { expiresIn: "60m" } 
   );
 
   const refreshToken = jwt.sign(
     { id: user._id, role: user.role, email: user.email },
-    process.env.REFRESH_TOKEN_SECRET, // Different secret for refresh token
-    { expiresIn: "7d" } // Refresh token lasts 7 days
+    process.env.REFRESH_TOKEN_SECRET,
+    { expiresIn: "7d" }
   );
 
   return { accessToken, refreshToken };
