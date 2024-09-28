@@ -25,6 +25,7 @@ const corsOptions = {
   origin: [
     "http://localhost:5173",
     "https://search-filtering.web.app",
+    "https://mystore-client-one.vercel.app",
     "https://search-filtering.firebaseapp.com",
   ],
   methods: ["GET", "POST", "DELETE", "PUT"],
