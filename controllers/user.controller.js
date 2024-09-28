@@ -69,49 +69,50 @@ const loginUser = async (req, res) => {
   const { email, password } = req.body;
   try {
     const checkUser = await User.findOne({ email });
-    if (!checkUser) {
-      return res.status(404).json({
+    if (!checkUser) { 
+      return res.status(401).json({
         success: false,
         message: "User not found",
       });
-    }
+    };
 
-    const isMatch = await bcrypt.compare(password, checkUser.password);
-    if (!isMatch) {
+    const checkPassword = await bcrypt.compare(password, checkUser.password);
+    if (!checkPassword) { 
       return res.status(401).json({
         success: false,
-        message: "Incorrect password",
+        message: "Invalid password",
       });
-    }
+    };
 
-    const { accessToken, refreshToken } = generateTokens(checkUser);
-
-    // Set cookies
-    res.cookie("token", accessToken, { httpOnly: true, secure: false });
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: false,
-      path: "/refresh-token",
-    });
-
-    return res.json({
-      success: true,
-      message: "Login successful",
-      user: {
-        email: checkUser.email,
-        role: checkUser.role,
+    const { token } = jwt.sign(
+      {
         id: checkUser._id,
+        role: checkUser.role,
+        email: checkUser.email,
         userName: checkUser.userName,
       },
-    });
+      process.env.SECRET_KEY, {expiresIn: '60m'}
+    );
+
+    res.cookie("token", { httpOnly: true, secure: false }).json({
+      success: true,
+      message: "User logged in successfully",
+      token,
+      user: {
+        id: checkUser._id,
+        role: checkUser.role,
+        email: checkUser.email,
+        userName: checkUser.userName,
+      }
+    })
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      success: false,
-      message: "Some error occurred",
-    });
+     console.log(e);
+     res.status(500).json({
+       success: false,
+       message: "Some error occurred",
+     });
   }
-};
+}
 
 // Google Sign-In
 const googleSingIn = async (req, res) => {
@@ -164,53 +165,16 @@ const googleSingIn = async (req, res) => {
 
 // Logout user
 const logoutUser = async (req, res) => {
-  res.clearCookie("token");
-  res.clearCookie("refreshToken", { path: "/refresh-token" });
-  return res.json({
+  res.clearCookie("token").json({
     success: true,
-    message: "Logged out successfully",
-  });
+    message: "User logged out successfully",
+  })
 };
 
-// Refresh token
-const refreshAuthToken = async (req, res) => {
-  const { refreshToken } = req.cookies;
-
-  if (!refreshToken) {
-    return res.status(401).json({
-      success: false,
-      message: "Refresh token not found",
-    });
-  }
-
-  try {
-    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-
-    const newAccessToken = jwt.sign(
-      { id: decoded.id, role: decoded.role, email: decoded.email },
-      process.env.SECRET_KEY,
-      { expiresIn: "60m" } 
-    );
-
-    res.cookie("token", newAccessToken, { httpOnly: true, secure: false });
-
-    return res.json({
-      success: true,
-      message: "New access token issued",
-    });
-  } catch (error) {
-    console.error("Refresh Token Error:", error);
-    return res.status(401).json({
-      success: false,
-      message: "Invalid refresh token",
-    });
-  }
-};
 
 module.exports = {
   registerUser,
   loginUser,
   googleSingIn,
   logoutUser,
-  refreshAuthToken,
 };

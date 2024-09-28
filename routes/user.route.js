@@ -4,7 +4,6 @@ const {
   loginUser,
   googleSingIn,
   logoutUser,
-  refreshAuthToken,
 } = require("../controllers/user.controller");
 const authMiddleware = require('../middlewares/authMiddleware');
 
@@ -12,9 +11,6 @@ const router = express.Router();
 
 // register router
 router.post('/register', registerUser);
-
-// refresh token
-router.get('/refresh-token', refreshAuthToken);
 
 // login router
 router.post('/login', loginUser);
