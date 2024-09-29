@@ -88,11 +88,18 @@ const loginUser = async (req, res) => {
 
     const { accessToken, refreshToken } = generateTokens(checkUser);
 
-    res.cookie("token", accessToken, { httpOnly: true, secure: false });
-    res.cookie("refreshToken", refreshToken, {
+    
+    const cookieOptions = {
       httpOnly: true,
-      secure: false,
-      path: "/refresh-token",
+      secure: process.env.NODE_ENV === "production", 
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",  
+      path: "/",  
+    };
+
+    res.cookie("token", accessToken, cookieOptions);
+    res.cookie("refreshToken", refreshToken, {
+      ...cookieOptions,
+      path: "/refresh-token",  
     });
 
     return res.json({
@@ -114,6 +121,7 @@ const loginUser = async (req, res) => {
     });
   }
 };
+
 
 
 // Google Sign-In
