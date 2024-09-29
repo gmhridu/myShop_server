@@ -175,11 +175,26 @@ const googleSignIn = async (req, res) => {
 
 // Logout user
 const logoutUser = async (req, res) => {
-  res.clearCookie("token").clearCookie("refreshToken").json({
-    success: true,
-    message: "User logged out successfully",
-  });
+  res
+    .clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      path: "/",
+    })
+    .clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      path: "/refresh-token",
+    })
+    .status(200)
+    .json({
+      success: true,
+      message: "User logged out successfully",
+    });
 };
+
 
 // Refresh token endpoint
 const refreshToken = async (req, res) => {
