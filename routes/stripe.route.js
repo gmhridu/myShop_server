@@ -8,10 +8,11 @@ const {
   getOrderDetailsForAdmin,
   updateOrderStatus,
 } = require("../controllers/stripe.controller");
+const authMiddleware = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
-router.post("/create-order", createOrder);
+router.post("/create-order", authMiddleware, createOrder);
 router.post('/capture', capturePayment);
 router.get('/list/:userId', getAllOrdersByUser);
 router.get('/details/:id', getOrderDetails);
