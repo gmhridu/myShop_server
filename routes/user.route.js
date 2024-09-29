@@ -1,35 +1,38 @@
-const express = require('express');
+const express = require("express");
 const {
   registerUser,
   loginUser,
-  googleSingIn,
+  googleSignIn,
   logoutUser,
+  refreshToken,
 } = require("../controllers/user.controller");
-const authMiddleware = require('../middlewares/authMiddleware');
+const authMiddleware = require("../middlewares/authMiddleware");
 
 const router = express.Router();
 
-// register router
-router.post('/register', registerUser);
+// Register user
+router.post("/register", registerUser);
 
-// login router
-router.post('/login', loginUser);
+// Login user
+router.post("/login", loginUser);
 
-// google signIn router
-router.post('/google', googleSingIn);
+// Google Sign-In
+router.post("/google", googleSignIn);
 
-// logout router
-
+// Logout user
 router.post("/logout", logoutUser);
 
-// middleware
-router.get('/check-auth', authMiddleware, (req, res) => {
+// Refresh access token using refresh token
+router.post("/refresh-token", refreshToken);
+
+// Middleware protected route
+router.get("/check-auth", authMiddleware, (req, res) => {
   const user = req.user;
   res.status(200).json({
     success: true,
     message: "User authenticated successfully",
-    user
-  })
-})
+    user,
+  });
+});
 
 module.exports = router;

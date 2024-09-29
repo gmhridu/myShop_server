@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Cart = require("../models/cart.model");
 const Product = require("../models/product.model");
 
@@ -57,12 +58,9 @@ const fetchCartItems = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid request",
-      });
-    }
+   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+     return res.status(400).json({ message: "Invalid user ID" });
+   }
 
     const cart = await Cart.findOne({ userId }).populate({
       path: "items.productId",

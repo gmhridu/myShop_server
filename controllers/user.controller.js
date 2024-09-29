@@ -67,55 +67,57 @@ const registerUser = async (req, res) => {
 // Login user
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
+
   try {
     const checkUser = await User.findOne({ email });
-    if (!checkUser) { 
+
+    if (!checkUser) {
       return res.status(401).json({
         success: false,
         message: "User not found",
       });
-    };
+    }
 
     const checkPassword = await bcrypt.compare(password, checkUser.password);
-    if (!checkPassword) { 
+    if (!checkPassword) {
       return res.status(401).json({
         success: false,
         message: "Invalid password",
       });
-    };
+    }
 
-    const { token } = jwt.sign(
-      {
-        id: checkUser._id,
-        role: checkUser.role,
-        email: checkUser.email,
-        userName: checkUser.userName,
-      },
-      process.env.SECRET_KEY, {expiresIn: '60m'}
-    );
+    const { accessToken, refreshToken } = generateTokens(checkUser);
 
-    res.cookie("token", { httpOnly: true, secure: false }).json({
+    res.cookie("token", accessToken, { httpOnly: true, secure: false });
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: false,
+      path: "/refresh-token",
+    });
+
+    return res.json({
       success: true,
       message: "User logged in successfully",
-      token,
+      token: accessToken,
       user: {
         id: checkUser._id,
         role: checkUser.role,
         email: checkUser.email,
         userName: checkUser.userName,
-      }
-    })
+      },
+    });
   } catch (error) {
-     console.log(e);
-     res.status(500).json({
-       success: false,
-       message: "Some error occurred",
-     });
+    console.error("Login Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Some error occurred",
+    });
   }
-}
+};
+
 
 // Google Sign-In
-const googleSingIn = async (req, res) => {
+const googleSignIn = async (req, res) => {
   const { idToken } = req.body;
   try {
     const ticket = await client.verifyIdToken({
@@ -147,7 +149,7 @@ const googleSingIn = async (req, res) => {
 
     return res.json({
       success: true,
-      message: "Login successful",
+      message: "Google login successful",
       user: {
         email: user.email,
         role: user.role,
@@ -165,16 +167,55 @@ const googleSingIn = async (req, res) => {
 
 // Logout user
 const logoutUser = async (req, res) => {
-  res.clearCookie("token").json({
+  res.clearCookie("token").clearCookie("refreshToken").json({
     success: true,
     message: "User logged out successfully",
-  })
+  });
 };
 
+// Refresh token endpoint
+const refreshToken = async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) {
+    return res.status(401).json({
+      success: false,
+      message: "Refresh token not provided",
+    });
+  }
+
+  try {
+    const user = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+   
+    const newAccessToken = jwt.sign(
+      {
+        id: user.id,
+        role: user.role,
+        email: user.email,
+        userName: user.userName,
+      },
+      process.env.SECRET_KEY,
+      { expiresIn: "60m" } 
+    );
+
+    res.cookie("token", newAccessToken, { httpOnly: true, secure: false });
+    return res.json({
+      success: true,
+      token: newAccessToken,
+    });
+  } catch (error) {
+    console.error("Refresh Token Error:", error);
+    return res.status(403).json({
+      success: false,
+      message: "Invalid refresh token",
+    });
+  }
+};
 
 module.exports = {
   registerUser,
   loginUser,
-  googleSingIn,
+  googleSignIn,
   logoutUser,
+  refreshToken,
 };
