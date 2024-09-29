@@ -176,41 +176,33 @@ const logoutUser = async (req, res) => {
 // Refresh token endpoint
 const refreshToken = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
+
   if (!refreshToken) {
-    return res.status(401).json({
-      success: false,
-      message: "Refresh token not provided",
-    });
+    return res
+      .status(401)
+      .json({ success: false, message: "Refresh token not provided" });
   }
 
   try {
-    const user = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
-   
+    // Generate a new access token
     const newAccessToken = jwt.sign(
-      {
-        id: user.id,
-        role: user.role,
-        email: user.email,
-        userName: user.userName,
-      },
+      { id: decoded.id, role: decoded.role, email: decoded.email },
       process.env.SECRET_KEY,
-      { expiresIn: "60m" } 
+      { expiresIn: "60m" }
     );
 
+    // Send the new access token
     res.cookie("token", newAccessToken, { httpOnly: true, secure: false });
-    return res.json({
-      success: true,
-      token: newAccessToken,
-    });
+    return res.json({ success: true, token: newAccessToken });
   } catch (error) {
-    console.error("Refresh Token Error:", error);
-    return res.status(403).json({
-      success: false,
-      message: "Invalid refresh token",
-    });
+    return res
+      .status(403)
+      .json({ success: false, message: "Invalid refresh token" });
   }
 };
+
 
 module.exports = {
   registerUser,

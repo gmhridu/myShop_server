@@ -2,11 +2,11 @@ const jwt = require("jsonwebtoken");
 
 const authMiddleware = async (req, res, next) => {
   const token = req.cookies.token;
+
   if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: "Unauthorized user!",
-    });
+    return res
+      .status(401)
+      .json({ success: false, message: "Unauthorized user!" });
   }
 
   try {
@@ -14,10 +14,12 @@ const authMiddleware = async (req, res, next) => {
     req.user = decoded;
     next();
   } catch (error) {
-    return res.status(401).json({
-      success: false,
-      message: "Invalid token!",
-    });
+    if (error.name === "TokenExpiredError") {
+      return res
+        .status(401)
+        .json({ success: false, message: "Token expired!" });
+    }
+    return res.status(401).json({ success: false, message: "Invalid token!" });
   }
 };
 
